@@ -43,6 +43,7 @@ public class ImageUtil extends FileFilter {
 		
 	}
 	
+	@SuppressWarnings("static-access")
 	public static void importImage() {
 		
 		fc = new JFileChooser();
@@ -68,6 +69,7 @@ public class ImageUtil extends FileFilter {
 		
 	}
 	
+	@SuppressWarnings("static-access")
 	public static void saveImage() {
 		
 		if(!saved) {	
