@@ -1,24 +1,30 @@
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import java.util.Iterator;
+import java.awt.event.ActionEvent;
 import java.util.Scanner;
-import java.awt.Image;
+import javax.swing.*;
+import java.util.*;
+import java.awt.*;
 import java.io.*;
 
 public class HuffmanTree {
-
+	
+	public static JProgressBar taskBar, progressBar;
+	public static JLabel task, progress, icon;
+	private JButton ok, cancel;
+	private JFrame cf;
+	
+	public static Thread thread, animation;
 	private InputStreamReader reader;
 	private BufferedWriter bw1, bw;
 	private FileWriter fw1, fw;
 	private BufferedImage bimg;
-	private Render render;
 	private FileReader fr;
 	private File file, f;
 	private Scanner scan;
 
 	private String x = "";
-	private StringBuilder finCodedBit;
+	private String finCodedBit = "";
 	private String[] codedBit;
 	private String[] fi;
 	private Node[] nodeStat;
@@ -36,6 +42,8 @@ public class HuffmanTree {
 	private int maxSize;
 	private int cout;
 	private int ind;
+	
+	private boolean compressing = true;
 	
 	public HuffmanTree(int size) {
 		
@@ -59,113 +67,238 @@ public class HuffmanTree {
 		
 	}
 	
-	public void compress(JFrame appframe, int huffMode) {
-			
-		render = new Render();
+	private void progressFrame() {
+		
+		ImageIcon img1 = new ImageIcon("images/turn_1.png");
+		ImageIcon img2 = new ImageIcon("images/turn_2.png");
+		JPanel panel = new JPanel();		
+		
+		icon = new JLabel(img1);
+		ok = new JButton("  OK  ");
+		taskBar = new JProgressBar();
+		cancel = new JButton("Cancel");
+		progressBar = new JProgressBar();
+		cf = new JFrame("Compressing...");
+		task = new JLabel("Starting Compression...");
+		progress = new JLabel("Overall Progress Status :                          0 %");
+
+		task.setForeground(Color.WHITE);
+		progress.setForeground(Color.WHITE);
+		progressBar.setPreferredSize(new Dimension(370,20));
+		taskBar.setPreferredSize(new Dimension(370,20));
+		taskBar.setMaximum(Render.index-2);
+		progressBar.setMaximum(100);
+		progressBar.setMinimum(0);
+		taskBar.setMinimum(0);
+		
+		ok.setFont(Frame.CALIBRI);
+		cancel.setFont(Frame.CALIBRI);
+		progress.setFont(Frame.CALIBRI);
+		task.setFont(Frame.CALIBRI);
+		
+		ok.setVisible(false);
+		cf.setLayout(new FlowLayout(FlowLayout.CENTER));
+		panel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		panel.setPreferredSize(new Dimension(390,130));
+		panel.setBackground(Frame.THEME);
+		
+		panel.add(task);
+		panel.add(taskBar);
+		panel.add(progress);
+		panel.add(progressBar);
+		cf.add(icon);
+		cf.add(panel);
+		cf.add(ok);
+		cf.add(cancel);
+		
+		cf.setSize(420,280);
+		cf.setUndecorated(true);
+		cf.setVisible(true);
+		cf.setLocationRelativeTo(null);
+		cf.getRootPane().setBorder(Frame.myBorder());
+		cf.getContentPane().setBackground(Frame.THEME);
+		cf.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		animation = new Thread() {
+			public void run() {
+				try{
+					while(compressing) {
+						icon.setIcon(img2);
+						Thread.sleep(500);
+						icon.setIcon(img1);
+						Thread.sleep(500);
+					}
+					icon.setIcon(new ImageIcon("images/finished_icon.png"));
+				}catch(InterruptedException ie) {}
+			}
+		};
+				
+	}
+	
+	public static void updateProgress(int progBarCount) {
 		
 		try{
-			 
-			if(huffMode == 0)						  
-				CREATE_HUFF_FILE("Color_Freq.huff", true);
-			else if(huffMode == 1)
-				CREATE_HUFF_FILE("Color_Freq.huff", false);
-			else
-				return;
+			taskBar.setValue(taskBar.getMaximum());
+			Thread.sleep(100);
+			progressBar.setValue(progBarCount);
+			progress.setText("Overall Progress Status :                          " + progBarCount + " %");
+			taskBar.setValue(0);
+		}catch(InterruptedException ie) {}
+		
+	}
+	
+	public void compress(JFrame appframe) {
 			
-			render.updateProgress(48);
-			render.taskBar.setMaximum(ctr);
-			render.task.setText("GENERATING HUFFMAN TREE...");
-			
-			int barCount = 0;
-			while(ctr > 1) {
-				Node l = dequeue(true);
-				Node r = dequeue(true);
-				enqueue('\0', l.getFrequency() + r.getFrequency(), l, r);
-				
-				if(ctr % 10 == 0) {
-					render.taskBar.setValue(++barCount);
-					Thread.sleep(1);							
-				}
-				ctr++;
-			}
-			
-			render.updateProgress(46);
-			preOrderTraversal(node[0], "");
-			
-			render.task.setText("Appending Corresponding Pixel Code Bits from .HUFF file...");
-			render.taskBar.setMaximum(Render.size * numofChars);
-			
-			finCodedBit = new StringBuilder();
-			for(int d = 0; d < Render.size; d++) {
-				for(int c = 0; c < numofChars; c++) {
-					if(chArr[c] == Render.pixel2[d])
-						finCodedBit.append(codedBit[c]);
-				}
-			}
-			
-			render.updateProgress(60);
-			CREATE_ALGO_FILE("image.algo");
-			render.task.setText("Creating image from .ALGO file...Traversing Huffman Tree...");
-			
-			int h = 0;
-			Node de = node[0];
-			render.taskBar.setMaximum(fi.length * 7);
-			
-			barCount = 0;
-			for(int j = 0; j < cout; j++) {
-				for(int i = 0; i < 7; i++) {
-					if(j == cout - 1 && i == finCodedBit.length() + 1) 
-						break;
+		Object[] options = {"New .HUFF File", "Existing .HUFF File"};
+		int choice = JOptionPane.showOptionDialog(null, "Where would you like to train your Huffman Tree?",
+												  "Select .HUFF Mode", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+												  null, options, options[0]);
+		if(choice == 0 || choice == 1) {
+			appframe.setEnabled(false);
+			progressFrame();
+			animation.start();
+		}
+		
+		thread = new Thread() {
+			public void run() {
+				try{
+					if(choice == 0 || choice == 1)
+						Render.renderImage(ImageUtil.selectedFile, cf);
+					 
+					if(choice == 0)						  
+						CREATE_HUFF_FILE("Color_Freq.huff", true);
+					else if(choice == 1)
+						CREATE_HUFF_FILE("Color_Freq.huff", false);
+					else if(choice == -1)
+						return;
 					
-					char a = fi[j].charAt(i);
-					if(de.isLeaf()) {
-						test[h] = de.getItem();
-						de = node[0];
-						h++;
+					updateProgress(48);
+					taskBar.setMaximum(ctr);
+					task.setText("GENERATING HUFFMAN TREE...");
+					
+					int barCount = 0;
+					while(ctr > 1) {
+						Node l = dequeue(true);
+						Node r = dequeue(true);
+						enqueue('\0', l.getFrequency() + r.getFrequency(), l, r);
+						
+						if(ctr % 10 == 0) {
+							taskBar.setValue(++barCount);
+							Thread.sleep(1);							
+						}
+						ctr++;
 					}
-				
-					if(!de.isLeaf()) {
-						if(a == '0')
-							de = de.getLeftChild();
-						else if(a == '1')
-							de = de.getRightChild();	
+					
+					updateProgress(46);
+					preOrderTraversal(node[0], "");
+					
+					task.setText("Appending Corresponding Pixel Code Bits from .HUFF file...");
+					taskBar.setMaximum(Render.size * numofChars);
+					
+					barCount = 0;
+					for(int d = 0; d < Render.size; d++) {
+						for(int c = 0; c < numofChars; c++) {
+							if(chArr[c] == Render.pixel2[d]) {
+								finCodedBit += codedBit[c];
+							}
+						}
 					}
-					++barCount;
-				}	
-				if((barCount * j) % (fi.length * 7) == 0) {
-					render.taskBar.setValue(j * barCount);
+					
+					updateProgress(60);
+					CREATE_ALGO_FILE("image.algo");
+					task.setText("Creating image from .ALGO file...Traversing Huffman Tree...");
+					
+					int h = 0;
+					Node de = node[0];
+					taskBar.setMaximum(fi.length * 7);
+					
+					for(int j = 0; j < cout; j++) {
+						for(int i = 0; i < 7; i++) {
+							if(j == cout-1 && i == (finCodedBit.length() % 7)+1) {
+								break;
+							}
+							char a = fi[j].charAt(i);
+							if(de.isLeaf()) {
+								test[h] = de.getItem();
+								de = node[0];
+								h++;
+							}
+						
+							if(!de.isLeaf()) {
+								if(a == '0')
+									de = de.getLeftChild();
+								else if(a == '1')
+									de = de.getRightChild();	
+							}
+							
+							if(i % 10 == 0) {
+								taskBar.setValue(i);
+								Thread.sleep(1);
+							}
+						}
+					}
+					
+					updateProgress(80);
+					task.setText("Getting Image Width and Height...");
+					Thread.sleep(200);
+					taskBar.setValue(taskBar.getMaximum()/4);
+					bimg = new BufferedImage(Render.image.getWidth(), Render.image.getHeight(), BufferedImage.TYPE_INT_RGB);
+					updateProgress(84);
+					
+					task.setText("Buffering Image...Creating compressed image...");
+					Thread.sleep(200);
+					taskBar.setValue(taskBar.getMaximum()/3);
+					getCompressedImage();
+					
+					task.setText("COMPRESSION FINISHED.");
+					updateProgress(100);
+					taskBar.setValue(taskBar.getMaximum());
+					compressing = false;
+					cancel.setVisible(false);
+					ok.setVisible(true);					
+					
+					ok.addActionListener(
+						new ActionListener() {
+							public void actionPerformed(ActionEvent a) {
+								cf.dispose();
+								appframe.toFront();
+								appframe.repaint();
+								compressing = false;
+								appframe.setEnabled(true);
+							}
+						}
+					);	
+					
+				}catch(InterruptedException ie) {}
+			}   // run
+		};  // thread
+		
+		if(choice == 0 || choice == 1)
+			thread.start();
+		
+		cancel.addActionListener(
+			new ActionListener() {
+				public void actionPerformed(ActionEvent a) {
+					int choice = JOptionPane.showConfirmDialog(null, "   Cancel Compression?", "Abort Notice", JOptionPane.YES_NO_OPTION);
+					if(choice == JOptionPane.YES_OPTION) {
+						cf.dispose();
+						appframe.toFront();
+						appframe.repaint();
+						compressing = false;
+						appframe.setEnabled(true);
+						JOptionPane.showMessageDialog(null, "     Compression Aborted.", "Terminated", JOptionPane.WARNING_MESSAGE);
+					}
 				}
-				++barCount;						
 			}
-			
-			render.updateProgress(80);
-			render.task.setText("Getting Image Width and Height...");
-			Thread.sleep(200);
-			render.taskBar.setValue(render.taskBar.getMaximum()/4);
-			bimg = new BufferedImage(Render.image.getWidth(), Render.image.getHeight(), BufferedImage.TYPE_INT_RGB);
-			render.updateProgress(98);
-			
-			render.task.setText("Buffering Image...Creating compressed image...");
-			Thread.sleep(200);
-			render.taskBar.setValue(render.taskBar.getMaximum()/3);
-			getCompressedImage();
-			
-			render.task.setText("COMPRESSION FINISHED.");
-			render.updateProgress(100);
-			render.taskBar.setValue(render.taskBar.getMaximum());
-			render.compressing = false;
-			render.cancel.setVisible(false);
-			render.ok.setVisible(true);				
-			
-		}catch(InterruptedException ie) {}		
+		);			
 		
 	}
 	
 	public BufferedImage getCompressedImage() {
 		
 		int index = 0;
-		for(int i = 0; i < Render.image.getHeight() && render.compressing; i++) {
-			for(int j = 0; j < Render.image.getWidth() && render.compressing; j++) {
+		for(int i = 0; i < Render.image.getHeight() && compressing; i++) {
+			for(int j = 0; j < Render.image.getWidth() && compressing; j++) {
 				bimg.setRGB(j, i, test[index]);
 				index++;
 			}
@@ -216,7 +349,9 @@ public class HuffmanTree {
 			bw = new BufferedWriter(fw);
 			boolean isThere = false;
 			
-			render.task.setText("Counting Pixel Color Frequencies...");
+			task.setText("Counting Pixel Color Frequencies...");
+			Thread.sleep(1000);
+			
 			Iterator <Integer> keySetIterator = Render.map.keySet().iterator();
 			
 			while(keySetIterator.hasNext()) { 
@@ -231,19 +366,19 @@ public class HuffmanTree {
 				numofChars++;
 				
 				if(ctr % 1000 == 0) {
-					render.taskBar.setValue(ctr);
-					Thread.sleep(1);
+					taskBar.setValue(ctr);
+					thread.sleep(1);
 				}
-				render.task.setText("Writing Color Distribution Frequency to .HUFF File...");
+				task.setText("Writing Color Distribution Frequency to .HUFF File...");
 			}
 			
 			bw.flush();
 			bw.close();
-			render.task.setText("Created .HUFF File (Closing BufferedWriter)");
-			render.updateProgress(21);
+			task.setText("Created .HUFF File (Closing BufferedWriter)");
+			updateProgress(21);
 			fw.close();
-			render.task.setText("Created .HUFF File (Closing FileWriter)");
-			render.updateProgress(23);
+			task.setText("Created .HUFF File (Closing FileWriter)");
+			updateProgress(23);
 			
 		}catch(Exception e){}
 		
@@ -252,7 +387,7 @@ public class HuffmanTree {
 	private void CREATE_ALGO_FILE(String fileName) {
 		
 		try{
-			render.task.setText("Creating .ALGO File...");
+			task.setText("Creating .ALGO File...");
 			Thread.sleep(100);
 			
 			f = new File(fileName);
@@ -262,43 +397,42 @@ public class HuffmanTree {
 			
 			int barCount = 0;
 			String string1 = "";
-			render.taskBar.setMaximum((7 - (finCodedBit.length() % 7)) - 1);
-			render.task.setText("Creating .ALGO File (Chunking Code Bits to 7-BIT VALUES)");
+			taskBar.setMaximum((7 - (finCodedBit.length() % 7)) - 1);
+			task.setText("Creating .ALGO File (Chunking Code Bits to 7-BIT VALUES)");
 			
 			for(int i = 0; i < 7 - (finCodedBit.length() % 7); i++) {
 				if(finCodedBit.length() % 7 != 0)
 					string1 += "0";
-				render.taskBar.setValue(++barCount);
+				taskBar.setValue(++barCount);
 				Thread.sleep(1);
 			}
 			x = finCodedBit + string1;
 			
-			render.taskBar.setMaximum((x.length()/7) - 1);
-			render.task.setText("Writing 7-Bit Code Character Values to .ALGO File...");
+			Thread.sleep(100);
+			taskBar.setMaximum((x.length()/7) - 1);
+			task.setText("Writing 7-Bit Code Character Values to .ALGO File...");
 			
 			for(int j = 0; j < x.length() / 7; j++) {
 				bw1.write((char) Integer.parseInt(x.substring((j*7), (j+1)*7), 2));
-				if(j % (x.length() / 7) == 0) {
-					render.taskBar.setValue(j);
-					Thread.sleep(1);
-				}
+				taskBar.setValue(++barCount);
+				Thread.sleep(1);
 			}
 			
 			bw1.flush();
 			bw1.close();
-			render.task.setText("Created .ALGO File (Closing BufferedWriter)");
-			render.updateProgress(62);
+			task.setText("Created .ALGO File (Closing BufferedWriter)");
+			updateProgress(62);
 			fw1.close();
-			render.task.setText("Created .ALGO File (Closing FileWriter)");
-			render.updateProgress(64);
+			task.setText("Created .ALGO File (Closing FileWriter)");
+			updateProgress(64);
 			
 			int sc;
 			barCount = 0;
 			String p = "";
 			
 			reader = new InputStreamReader(new FileInputStream(f));
-			render.task.setText("Reading chars from .ALGO File...");
-			render.taskBar.setMaximum((int) f.length() * (7 - p.length()));
+			task.setText("Reading chars from .ALGO File...");
+			taskBar.setMaximum((int) f.length() * (7 - p.length()));
 			
 			while((sc = reader.read()) != -1) {
 				p = Integer.toBinaryString(sc);
@@ -311,13 +445,13 @@ public class HuffmanTree {
 				fi[cout++] = string2 + p;
 				
 				if(barCount % 1000 == 0) {
-					render.taskBar.setValue(++barCount * (7-p.length()));
+					taskBar.setValue(++barCount * (7-p.length()));
 					Thread.sleep(1);
 				}
 			}
 			
 			reader.close();
-			render.updateProgress(75);
+			updateProgress(75);
 			
 		}catch(Exception e) {}
 		
@@ -369,18 +503,6 @@ public class HuffmanTree {
 		if(isString) 
 			return node[--nItems];
 		else return nodeStat[--nItems];
-		
-	}
-	
-	public int getLevel() {
-		
-		int lvl = codedBit[0].length();
-		
-		for(int c = 1; c < numofChars; c++) {
-			if(codedBit[c].length() > lvl) 
-				lvl = codedBit[c].length();
-		}
-		return lvl;
 		
 	}
 	
