@@ -1,9 +1,9 @@
 import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.*;
-import java.io.File;
 import java.awt.*;
 
+@SuppressWarnings("serial")
 public class Frame extends JFrame implements MenuListener {
 
 	public static final Font CONSOLAS = new Font("Consolas", Font.BOLD, 15);
