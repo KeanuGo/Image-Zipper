@@ -24,7 +24,7 @@ public class HuffmanTree {
 	private Scanner scan;
 
 	private String x = "";
-	private String finCodedBit = "";
+	private StringBuilder finCodedBit;
 	private String[] codedBit;
 	private String[] fi;
 	private Node[] nodeStat;
@@ -196,10 +196,11 @@ public class HuffmanTree {
 					taskBar.setMaximum(Render.size * numofChars);
 					
 					barCount = 0;
+					finCodedBit = new StringBuilder();
 					for(int d = 0; d < Render.size; d++) {
 						for(int c = 0; c < numofChars; c++) {
 							if(chArr[c] == Render.pixel2[d]) {
-								finCodedBit += codedBit[c];
+								finCodedBit.append(codedBit[c]);
 							}
 						}
 					}
