@@ -17,6 +17,8 @@ public class Render {
 	public static int size;
 	public static int ind;
 	
+	
+	@SuppressWarnings("static-access")
 	public static void renderImage(File file, JFrame cFrame) {
 			
 		try{
@@ -29,7 +31,7 @@ public class Render {
 			image = ImageIO.read(file);
 			huff.updateProgress(100);
 			
-			map = new HashMap();
+			map = new HashMap<Integer, Integer>();
 			huff.task.setText("Getting height and width of image...");
 			pixel = new int[size = image.getWidth() * image.getHeight()];
 			pixel2 = new int[image.getWidth() * image.getHeight()];
