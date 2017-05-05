@@ -37,11 +37,9 @@ public class HuffmanTree {
 	
 	private int numofChars = 0;
 	private int nItems = 0;
-	private int count = 1;
 	private int ctr = 0;
 	private int maxSize;
 	private int cout;
-	private int ind;
 	
 	private boolean compressing = true;
 	
@@ -348,7 +346,6 @@ public class HuffmanTree {
 		try{
 			fw = new FileWriter(fileName);
 			bw = new BufferedWriter(fw);
-			boolean isThere = false;
 			
 			task.setText("Counting Pixel Color Frequencies...");
 			Thread.sleep(1000);
@@ -363,12 +360,11 @@ public class HuffmanTree {
 				enqueue(key, Render.map.get(key), null, null);
 				
 				ctr++;
-				count = 0;
 				numofChars++;
 				
 				if(ctr % 1000 == 0) {
 					taskBar.setValue(ctr);
-					thread.sleep(1);
+					Thread.sleep(1);
 				}
 				task.setText("Writing Color Distribution Frequency to .HUFF File...");
 			}
@@ -506,5 +502,7 @@ public class HuffmanTree {
 		else return nodeStat[--nItems];
 		
 	}
+	
+	
 	
 }
