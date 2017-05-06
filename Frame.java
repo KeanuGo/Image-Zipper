@@ -4,17 +4,21 @@ import javax.swing.*;
 import java.awt.*;
 
 @SuppressWarnings("serial")
+
 public class Frame extends JFrame implements MenuListener {
 
 	public static final Font CONSOLAS = new Font("Consolas", Font.BOLD, 15);
 	public static final Font CALIBRI = new Font("Calibri", Font.BOLD, 15);
-	private static final Color TRANSPARENT_GRAY = new Color(20,20,20,150);
+	public static final Color TRANSPARENT_GRAY = new Color(20,20,20,150);
 	public static final Color THEME = new Color(40,40,40);
 	
 	public static JTextField[][] info = new JTextField[2][3];
 	public static JLabel[] imageWindows = new JLabel[2];
-	private JMenu[] menus = new JMenu[4];
+	private JPanel[] infoPanel = new JPanel[2];
+	private JMenu[] menus = new JMenu[3];
 	private JMenuBar menuBar;
+
+	private final Insets insets = this.getInsets();
 	
 	public Frame() {
 		
@@ -24,8 +28,23 @@ public class Frame extends JFrame implements MenuListener {
 		setContentPane(new JLabel(new ImageIcon("images/gray.jpg")));
 		setComponents();
 		setVisible(true);
+		setResizable(false);
 		setExtendedState(MAXIMIZED_BOTH);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+	}	
+	
+	public void cleanComponents() {
+
+		ImageUtil.selectedFile = null;
+		for(int x = 0; x < 2; x++) {
+			remove(imageWindows[x]);
+			remove(infoPanel[x]);
+		}
+		
+		menuBar.setVisible(false);
+		repaint();
+		setComponents();
 		
 	}
 	
@@ -34,8 +53,6 @@ public class Frame extends JFrame implements MenuListener {
 		UIManager.put("OptionPane.messageFont", CALIBRI);
 		JLabel[][] infoType = new JLabel[2][3];
 		JPanel[][] infoGrid = new JPanel[2][3];
-		JPanel[] infoPanel = new JPanel[2];
-		Insets insets = this.getInsets();
 		int position = 105;
 		
 		for(int x = 0; x < 2; x++) {
@@ -49,7 +66,7 @@ public class Frame extends JFrame implements MenuListener {
 			infoPanel[x].setLayout(new FlowLayout(FlowLayout.CENTER));
 			infoPanel[x].setBounds(position + insets.left, 530 + insets.top, 500, 130);
 			
-			String[] type = {"  FILE NAME : ", "  DIMENSION : ", "  SIZE      : "};
+			String[] type = {"  FILE NAME : ", "  DIMENSION : ", "    SIZE    : "};
 			
 			for(int y = 0; y < 3; y++) {
 				info[x][y] = new JTextField(35);
@@ -73,20 +90,22 @@ public class Frame extends JFrame implements MenuListener {
 			}
 			add(imageWindows[x]);
 			add(infoPanel[x]);
-			position += 650;
+			position += 645;
 		}
 		
 		imageWindows[0].setBounds(80 + insets.left, 55 + insets.top, 550, 460);
-		imageWindows[1].setBounds(725 + insets.left, 55 + insets.top, 550, 460);
+		imageWindows[1].setBounds(720 + insets.left, 55 + insets.top, 550, 460);
 		
-		String[] menuLabels = {"images/open.jpg", "images/save.png", "images/compress.jpg", "images/exit.jpg"};
-		String[] menuTexts = {"Import", "Save", "Compress", "Exit"};
+		String[] menuLabels = {"images/open.jpg", "images/save.png", "images/compress.jpg"};
+		String[] menuTexts = {"Import  Alt + F", "Save  Alt + S", "Compress  Alt + C"};
+		char[] shortcuts = {'F', 'S', 'C'};
 		
 		menuBar = new JMenuBar();
-		for(int a = 0; a < 4; a++) {			
+		for(int a = 0; a < 3; a++) {			
 			menus[a] = new JMenu();
 			menus[a].setIcon(new ImageIcon(menuLabels[a]));
 			menus[a].setToolTipText(menuTexts[a]);
+			menus[a].setMnemonic(shortcuts[a]);
 			menus[a].addMenuListener(this);
 			menus[a].setFont(CALIBRI);
 			menuBar.add(menus[a]);
@@ -110,6 +129,7 @@ public class Frame extends JFrame implements MenuListener {
 		if(m.getSource() == menus[0])  {
 			
 			try{
+				cleanComponents();
 				ImageUtil.importImage();
 				if(ImageUtil.isPNG(ImageUtil.selectedFile))
 					setTitle(ImageUtil.selectedFile.getCanonicalPath() + " - Image Zipper");
@@ -128,8 +148,7 @@ public class Frame extends JFrame implements MenuListener {
 			
 		}else if(m.getSource() == menus[2]) {
 			Render.compress(this);
-		}else if(m.getSource() == menus[3]) 
-			System.exit(0);
+		}
 		
 	}
 	
