@@ -9,11 +9,11 @@ import java.awt.Image;
 import java.io.File;
 
 public class ImageUtil extends FileFilter {
-	
+
+	public static boolean compressed;
 	public static File selectedFile, newFile;
 	public static String sizeType = "0 B";
 	private static JFileChooser fc;
-	private static boolean saved;
 	
 	public boolean accept(File f) {
 		return isPNG(f);
@@ -31,26 +31,12 @@ public class ImageUtil extends FileFilter {
 		return f.getName().toLowerCase().endsWith(".png");
 	}
 	
-	private static void cleanComponents() {
-		
-		saved = false;
-		for(int x = 0; x < 2; x++) {
-			Frame.imageWindows[x].setIcon(null);
-			for(int y = 0; y < 3; y++) {
-				Frame.info[x][y].setText("");
-			}
-		}
-		
-	}
-	
-	@SuppressWarnings("static-access")
 	public static void importImage() {
 		
 		fc = new JFileChooser();
 		fc.addChoosableFileFilter(new ImageUtil());
 		
-		if(fc.showOpenDialog(null) == fc.APPROVE_OPTION) {
-			cleanComponents();		
+		if(fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 			selectedFile = fc.getSelectedFile();
 			if(isPNG(selectedFile)) {
 				try{
@@ -69,12 +55,11 @@ public class ImageUtil extends FileFilter {
 		
 	}
 	
-	@SuppressWarnings("static-access")
 	public static void saveImage() {
 		
-		if(!saved) {	
+		if(compressed) {	
 			fc = new JFileChooser();
-			fc.setFileSelectionMode(fc.DIRECTORIES_ONLY);  
+			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);  
 			fc.showSaveDialog(null);
 			
 			try{
@@ -92,12 +77,9 @@ public class ImageUtil extends FileFilter {
 				Frame.info[1][0].setText(newFile.getName());
 				Frame.info[1][1].setText(Render.getImage().getWidth() + " x " + Render.getImage().getHeight() + " pixels");
 				Frame.info[1][2].setText(getFileSize(newFile) + sizeType);
-				saved = true;
-			}catch(Exception e) {
-				System.out.println("Saving image exception.");
-			}
+			}catch(Exception e) {}
 		}else{
-			JOptionPane.showMessageDialog(null, "Image has already been saved.", "Done", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(null, "Image not yet compressed.", "Uncompressed", JOptionPane.WARNING_MESSAGE);
 		}
 		
 	}
@@ -106,13 +88,13 @@ public class ImageUtil extends FileFilter {
 		
 		double size = file.length();
 		
-		if(size > (double) Math.pow(1024,1) && size < (double) Math.pow(1024,2)) {
+		if(size > Math.pow(1024,1) && size < Math.pow(1024,2)) {
 			size /= 1024;
 			sizeType = " KB";
-		}else if(size > (double) Math.pow(1024,2) && size < (double) Math.pow(1024,3)) {
-			size /= (double) Math.pow(1024,2);
+		}else if(size > Math.pow(1024,2) && size < Math.pow(1024,3)) {
+			size /= Math.pow(1024,2);
 			sizeType = " MB";
-		}else if(size >= 0 && size < (double) Math.pow(1024,1)) {
+		}else if(size >= 0 && size < Math.pow(1024,1)) {
 			sizeType = " B";
 		}
 		
