@@ -17,27 +17,27 @@ public class Render {
 	public static int size;
 	public static int ind;
 	
-	
-	@SuppressWarnings("static-access")
 	public static void renderImage(File file, JFrame cFrame) {
-			
+		
 		try{
 			ind = 0;
 			size = 0;
 			index = 0;
 			cFrame.toFront();
 			cFrame.repaint();
-			huff.task.setText("Loading Image...");
-			image = ImageIO.read(file);
-			huff.updateProgress(100);
 			
-			map = new HashMap<Integer, Integer>();
-			huff.task.setText("Getting height and width of image...");
+			HuffmanTree.task.setText("Loading Image...");
+			image = ImageIO.read(file);
+			
+			map = new HashMap <Integer, Integer> ();
+			HuffmanTree.task.setText("Getting height and width of image...");
+			
 			pixel = new int[size = image.getWidth() * image.getHeight()];
 			pixel2 = new int[image.getWidth() * image.getHeight()];
-			huff.updateProgress(9);
 			
-			huff.taskBar.setMaximum(size);
+			HuffmanTree.updateProgress(9);
+			HuffmanTree.taskBar.setMaximum(size);
+			
 			for(int i = 0; i < image.getHeight(); i++) {
 				for(int j = 0; j < image.getWidth(); j++) {
 					int RGBValue = image.getRGB(j, i) & 0xffffff;
@@ -47,17 +47,17 @@ public class Render {
 						map.put(RGBValue, map.get(RGBValue) + 1);
 					else map.put(RGBValue, 1); 
 					
-					huff.task.setText("Reading Image... Pixel[" + ((i+1)*ind) + "]   :  RGB(" + pixel2[ind] + ")");
+					HuffmanTree.task.setText("Reading Image... Pixel[" + ((i+1)*ind) + "]   :  RGB(" + pixel2[ind] + ")");
 					ind++;
 					
 					if(ind % 1000 == 0) {
-						huff.taskBar.setValue(ind);
-						huff.thread.sleep(1);						
+						HuffmanTree.taskBar.setValue(ind);
+						Thread.sleep(1);						
 					}
 					
 				}
 			}
-			huff.updateProgress(15);
+			HuffmanTree.updateProgress(15);
 			
 		}catch(IOException e) {
 			JOptionPane.showMessageDialog(null, "There has been a problem reading the image.", "Image Exception", JOptionPane.WARNING_MESSAGE);
@@ -68,10 +68,12 @@ public class Render {
 	}
 	
 	public static void compress(JFrame frame) {
-		
+			
 		if(ImageUtil.hasFile()) {
+			
 			huff = new HuffmanTree(10000000);
-			huff.compress(frame);			
+			huff.compress(frame);
+			
 		}else{
 			JOptionPane.showMessageDialog(null, "No image yet to be compressed. Import Image first.", "Select File", JOptionPane.WARNING_MESSAGE);
 		}
