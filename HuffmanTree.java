@@ -62,6 +62,7 @@ public class HuffmanTree {
 		newCount =  new int[maxSize];
 		nodeStat = new Node[maxSize];
 		codedBit = new String[maxSize];
+		ImageUtil.compressed = false;
 		
 	}
 	
@@ -151,151 +152,152 @@ public class HuffmanTree {
 		int choice = JOptionPane.showOptionDialog(null, "Where would you like to train your Huffman Tree?",
 												  "Select .HUFF Mode", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
 												  null, options, options[0]);
+
 		if(choice == 0 || choice == 1) {
 			appframe.setEnabled(false);
 			progressFrame();
 			animation.start();
-		}
 		
-		thread = new Thread() {
-			public void run() {
-				try{
-					if(choice == 0 || choice == 1)
+			thread = new Thread() {
+				public void run() {
+					try{
 						Render.renderImage(ImageUtil.selectedFile, cf);
-					 
-					if(choice == 0)						  
-						CREATE_HUFF_FILE("Color_Freq.huff", true);
-					else if(choice == 1)
-						CREATE_HUFF_FILE("Color_Freq.huff", false);
-					else if(choice == -1)
-						return;
-					
-					updateProgress(48);
-					taskBar.setMaximum(ctr);
-					task.setText("GENERATING HUFFMAN TREE...");
-					
-					int barCount = 0;
-					while(ctr > 1) {
-						Node l = dequeue(true);
-						Node r = dequeue(true);
-						enqueue('\0', l.getFrequency() + r.getFrequency(), l, r);
+						 
+						if(choice == 0)						  
+							CREATE_HUFF_FILE("Color_Freq.huff", true);
+						else if(choice == 1)
+							CREATE_HUFF_FILE("Color_Freq.huff", false);
+						else if(choice == -1)
+							return;
 						
-						if(ctr % 10 == 0) {
-							taskBar.setValue(++barCount);
-							Thread.sleep(1);							
-						}
-						ctr++;
-					}
-					
-					updateProgress(46);
-					preOrderTraversal(node[0], "");
-					
-					task.setText("Appending Corresponding Pixel Code Bits from .HUFF file...");
-					taskBar.setMaximum(Render.size * numofChars);
-					
-					barCount = 0;
-					finCodedBit = new StringBuilder();
-					for(int d = 0; d < Render.size; d++) {
-						for(int c = 0; c < numofChars; c++) {
-							if(chArr[c] == Render.pixel2[d]) {
-								finCodedBit.append(codedBit[c]);
-							}
-						}
-					}
-					
-					updateProgress(60);
-					CREATE_ALGO_FILE("image.algo");
-					task.setText("Creating image from .ALGO file...Traversing Huffman Tree...");
-					
-					int h = 0;
-					Node de = node[0];
-					taskBar.setMaximum(fi.length * 7);
-					
-					for(int j = 0; j < cout; j++) {
-						for(int i = 0; i < 7; i++) {
-							if(j == cout-1 && i == (finCodedBit.length() % 7)+1) {
-								break;
-							}
-							char a = fi[j].charAt(i);
-							if(de.isLeaf()) {
-								test[h] = de.getItem();
-								de = node[0];
-								h++;
-							}
+						updateProgress(48);
+						taskBar.setMaximum(ctr);
+						task.setText("GENERATING HUFFMAN TREE...");
 						
-							if(!de.isLeaf()) {
-								if(a == '0')
-									de = de.getLeftChild();
-								else if(a == '1')
-									de = de.getRightChild();	
-							}
+						int barCount = 0;
+						while(ctr > 1) {
+							Node l = dequeue(true);
+							Node r = dequeue(true);
+							enqueue('\0', l.getFrequency() + r.getFrequency(), l, r);
 							
-							if(i % 10 == 0) {
-								taskBar.setValue(i);
-								Thread.sleep(1);
+							if(ctr % 10 == 0) {
+								taskBar.setValue(++barCount);
+								Thread.sleep(1);							
+							}
+							ctr++;
+						}
+						
+						updateProgress(46);
+						preOrderTraversal(node[0], "");
+						
+						task.setText("Appending Corresponding Pixel Code Bits from .HUFF file...");
+						taskBar.setMaximum(Render.size * numofChars);
+						
+						taskBar.setMaximum(Render.size);
+						finCodedBit = new StringBuilder();
+						for(int d = 0; d < Render.size; d++) {
+							for(int c = 0; c < numofChars; c++) {
+								if(chArr[c] == Render.pixel2[d])
+									finCodedBit.append(codedBit[c]);
+								if(d == Render.size / 2)
+									taskBar.setValue(Render.size / 2);
 							}
 						}
-					}
-					
-					updateProgress(80);
-					task.setText("Getting Image Width and Height...");
-					Thread.sleep(200);
-					taskBar.setValue(taskBar.getMaximum()/4);
-					bimg = new BufferedImage(Render.image.getWidth(), Render.image.getHeight(), BufferedImage.TYPE_INT_RGB);
-					updateProgress(84);
-					
-					task.setText("Buffering Image...Creating compressed image...");
-					Thread.sleep(200);
-					taskBar.setValue(taskBar.getMaximum()/3);
-					getCompressedImage();
-					
-					task.setText("COMPRESSION FINISHED.");
-					updateProgress(100);
-					taskBar.setValue(taskBar.getMaximum());
-					compressing = false;
-					cancel.setVisible(false);
-					ok.setVisible(true);					
-					
-					ok.addActionListener(
-						new ActionListener() {
-							public void actionPerformed(ActionEvent a) {
-								cf.dispose();
-								appframe.toFront();
-								appframe.repaint();
-								compressing = false;
-								appframe.setEnabled(true);
+						
+						updateProgress(60);
+						CREATE_ALGO_FILE("image.algo");
+						task.setText("Creating image from .ALGO file...Traversing Huffman Tree...");
+						
+						int h = 0;
+						Node de = node[0];
+						taskBar.setMaximum(fi.length * 7);
+						
+						barCount = 0;
+						for(int j = 0; j < cout; j++) {
+							for(int i = 0; i < 7; i++) {
+								if(j == cout - 1 && i == finCodedBit.length() % 7 + 1) 
+									break;
+								
+								char a = fi[j].charAt(i);
+								if(de.isLeaf()) {
+									test[h] = de.getItem();
+									de = node[0];
+									h++;
+								}
+							
+								if(!de.isLeaf()) {
+									if(a == '0')
+										de = de.getLeftChild();
+									else if(a == '1')
+										de = de.getRightChild();	
+								}
+								++barCount;
+							}	
+							if((barCount * j) % (fi.length * 7) == 0) {
+								taskBar.setValue(j * barCount);
 							}
+							++barCount;						
 						}
-					);	
-					
-				}catch(InterruptedException ie) {}
-			}   // run
-		};  // thread
-		
-		if(choice == 0 || choice == 1)
-			thread.start();
-		
-		cancel.addActionListener(
-			new ActionListener() {
-				public void actionPerformed(ActionEvent a) {
-					int choice = JOptionPane.showConfirmDialog(null, "   Cancel Compression?", "Abort Notice", JOptionPane.YES_NO_OPTION);
-					if(choice == JOptionPane.YES_OPTION) {
-						cf.dispose();
-						appframe.toFront();
-						appframe.repaint();
+						
+						updateProgress(80);
+						task.setText("Getting Image Width and Height...");
+						bimg = new BufferedImage(Render.image.getWidth(), Render.image.getHeight(), BufferedImage.TYPE_INT_RGB);
+						updateProgress(98);
+						
+						task.setText("Buffering Image...Creating compressed image...");
+						getCompressedImage();
+						
+						task.setText("COMPRESSION FINISHED.");
+						updateProgress(100);
+						taskBar.setValue(taskBar.getMaximum());
+						
 						compressing = false;
-						appframe.setEnabled(true);
-						JOptionPane.showMessageDialog(null, "     Compression Aborted.", "Terminated", JOptionPane.WARNING_MESSAGE);
+						cancel.setVisible(false);
+						ok.setVisible(true);					
+						
+						ok.addActionListener(
+							new ActionListener() {
+								public void actionPerformed(ActionEvent a) {
+									cf.dispose();
+									appframe.toFront();
+									appframe.repaint();
+									compressing = false;
+									appframe.setEnabled(true);
+									ImageUtil.compressed = true;
+								}
+							}
+						);	
+						
+					}catch(InterruptedException ie) {}
+				}   // run
+			};  // thread
+			
+			thread.start();
+			
+			cancel.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent a) {
+						int choice = JOptionPane.showConfirmDialog(null, "   Cancel Compression?", "Abort Notice", JOptionPane.YES_NO_OPTION);
+						if(choice == JOptionPane.YES_OPTION) {
+							cf.dispose();
+							appframe.toFront();
+							appframe.repaint();
+							compressing = false;
+							appframe.setEnabled(true);
+							JOptionPane.showMessageDialog(null, "     Compression Aborted.", "Terminated", JOptionPane.WARNING_MESSAGE);
+						}
 					}
 				}
-			}
-		);			
+			);			
+		}
 		
 	}
 	
 	public BufferedImage getCompressedImage() {
 		
-		int index = 0;
+		int index = 0, interval = 5;
+		taskBar.setMaximum(Render.image.getHeight());
+		
 		for(int i = 0; i < Render.image.getHeight() && compressing; i++) {
 			for(int j = 0; j < Render.image.getWidth() && compressing; j++) {
 				bimg.setRGB(j, i, test[index]);
@@ -310,6 +312,8 @@ public class HuffmanTree {
 				Frame.imageWindows[1].setIcon(new ImageIcon(img));
 				Frame.imageWindows[1].repaint();
 			}
+			if(i == Render.image.getHeight() / interval)
+				taskBar.setValue(taskBar.getMaximum() / interval--);
 		}
 		return bimg;
 		
@@ -346,10 +350,8 @@ public class HuffmanTree {
 		try{
 			fw = new FileWriter(fileName);
 			bw = new BufferedWriter(fw);
-			
-			task.setText("Counting Pixel Color Frequencies...");
-			Thread.sleep(1000);
-			
+
+			task.setText("Writing Color Distribution Frequency to .HUFF File...");
 			Iterator <Integer> keySetIterator = Render.map.keySet().iterator();
 			
 			while(keySetIterator.hasNext()) { 
@@ -362,11 +364,8 @@ public class HuffmanTree {
 				ctr++;
 				numofChars++;
 				
-				if(ctr % 1000 == 0) {
+				if(ctr % 1000 == 0)
 					taskBar.setValue(ctr);
-					Thread.sleep(1);
-				}
-				task.setText("Writing Color Distribution Frequency to .HUFF File...");
 			}
 			
 			bw.flush();
@@ -405,14 +404,15 @@ public class HuffmanTree {
 			}
 			x = finCodedBit + string1;
 			
-			Thread.sleep(100);
 			taskBar.setMaximum((x.length()/7) - 1);
 			task.setText("Writing 7-Bit Code Character Values to .ALGO File...");
 			
 			for(int j = 0; j < x.length() / 7; j++) {
 				bw1.write((char) Integer.parseInt(x.substring((j*7), (j+1)*7), 2));
-				taskBar.setValue(++barCount);
-				Thread.sleep(1);
+				if(j % (x.length() / 7) == 0) {
+					taskBar.setValue(j);
+					Thread.sleep(1);
+				}
 			}
 			
 			bw1.flush();
@@ -503,6 +503,16 @@ public class HuffmanTree {
 		
 	}
 	
-	
+	public int getLevel() {
+		
+		int lvl = codedBit[0].length();
+		
+		for(int c = 1; c < numofChars; c++) {
+			if(codedBit[c].length() > lvl) 
+				lvl = codedBit[c].length();
+		}
+		return lvl;
+		
+	}
 	
 }
